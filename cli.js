@@ -193,7 +193,7 @@ async function main() {
 			})
 			.map(([key, testPath]) => [testPath, module[key]]);
 
-		if (validTests === 0) {
+		if (validTests === 0 && args['--verbose']) {
 			warning(`test file has no valid tests: ${filepath}`);
 		}
 
