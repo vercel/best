@@ -1,0 +1,39 @@
+{
+  "name": "@zeit/best",
+  "version": "0.1.0",
+  "description": "Bare testing framework",
+  "bin": {
+    "best": "cli.js"
+  },
+  "repository": "https://github.com/zeit/best",
+  "author": "Josh Junon <junon@zeit.co>",
+  "license": "MIT",
+  "devDependencies": {
+    "@zeit/eslint-config-node": "^0.2.5",
+    "@zeit/git-hooks": "^0.1.4",
+    "eslint": "^4.17.0"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@zeit/eslint-config-node"
+    ],
+    "parserOptions": {
+      "sourceType": "module"
+    }
+  },
+  "scripts": {
+    "lint": "eslint --ext .jsx,.js .",
+    "lint-staged": "git diff --cached --name-only '*.js' '*.jsx' | xargs eslint"
+  },
+  "git": {
+    "pre-commit": "lint-staged"
+  },
+  "dependencies": {
+    "arg": "^1.0.0",
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.26.0",
+    "chalk": "^2.3.1",
+    "globby": "^8.0.0",
+    "signal-exit": "^3.0.2"
+  }
+}
