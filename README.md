@@ -58,4 +58,4 @@ $ npm install --save-dev @zeit/best
 ```
 
 ## License
-Best is Copyright &copy; 2018 by ZEIT, Inc. and released under the [MIT License](LICENSE).
+Best is copyright &copy; 2018 by ZEIT, Inc. and released under the [MIT License](LICENSE).
