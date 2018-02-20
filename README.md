@@ -41,7 +41,7 @@ $ npm install --save-dev @zeit/best
 
     would translate to the test_name:
 
-        foo/my_example_test
+        test/foo/my_example_test
 
     Specify one or more (optional) test_name's to only run certain tests (or prefix
     with - to skip the named test).

@@ -47,7 +47,7 @@ if (args['--help']) {
 
     would translate to the {underline test_name}:
 
-        {bold foo/my_example_test}
+        {bold test/foo/my_example_test}
 
     Specify one or more (optional) {underline test_name}'s to only run certain tests (or prefix
     with {bold -} to skip the named test).
