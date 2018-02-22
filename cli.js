@@ -27,9 +27,9 @@ if (args['--help']) {
 
   A dead simple test runner.
 
-  - Export your functions and they're evaluated.
-  - Test names become function names.
-  - Exported functions are awaited upon.
+  - Export your functions and they're evaluated
+  - Function names become test names
+  - Exported functions are awaited upon
 
   {bold USAGE}
 
