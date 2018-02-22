@@ -41,9 +41,9 @@ if (args['--help']) {
 
     For example, the following test function inside {bold test/foo.js}:
 
-        {cyan export async} {bold.cyanBright function} my_example_test() {dim ${'{'}}
+        {cyan exports}.my_example_test {dim =} {bold.cyanBright async} () {dim =>} ${'{'}
             assert(foo {dim ===} bar);
-        {dim ${'}'}}
+        ${'}'};
 
     would translate to the {underline test_name}:
 
@@ -159,11 +159,6 @@ async function main() {
 		warning(`no test files specified`);
 		return;
 	}
-
-	// This is a good time to bring Babel online
-	require('babel-core/register')({
-		plugins: ['transform-es2015-modules-commonjs']
-	});
 
 	// Build up test suite
 	const suite = [];
