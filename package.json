@@ -23,7 +23,8 @@
   },
   "scripts": {
     "lint": "eslint --ext .jsx,.js .",
-    "lint-staged": "git diff --cached --name-only '*.js' '*.jsx' | xargs eslint"
+    "lint-staged": "git diff --cached --name-only '*.js' '*.jsx' | xargs eslint",
+    "test": "./cli.js"
   },
   "git": {
     "pre-commit": "lint-staged"
