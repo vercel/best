@@ -18,7 +18,10 @@ const args = arg({
 	'-I': '--include',
 
 	'--verbose': Boolean,
-	'-v': '--verbose'
+	'-v': '--verbose',
+
+	'--require': [String],
+	'-r': '--require'
 });
 
 if (args['--help']) {
@@ -61,6 +64,8 @@ if (args['--help']) {
     -I, --include {underline /dir/or/file}      Uses one or more directories/files as test sources.
                                     Defaults to {bold ./test/**/*.js} if no include directives
                                     are specified
+
+    -r, --require {underline module-name}       Imports a module or a script prior to running tests
 `);
 
 	process.exit(2);
@@ -138,6 +143,14 @@ async function main() {
 	// Hide the cursor
 	if (chalk.enabled) {
 		process.stdout.write('\x1b[?25l');
+	}
+
+	// Perform requirements
+	for (const requirement of (args['--require'] || [])) {
+		if (args['--verbose']) {
+			console.error(chalk`importing {bold ${requirement}}`);
+		}
+		require(requirement);
 	}
 
 	// Get file listing
