@@ -1,6 +1,6 @@
 {
   "name": "@zeit/best",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Bare testing framework",
   "bin": {
     "best": "cli.js"
