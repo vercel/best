@@ -32,6 +32,7 @@
   "dependencies": {
     "arg": "1.0.0",
     "chalk": "2.3.1",
+    "difflet": "1.0.1",
     "globby": "8.0.0",
     "signal-exit": "3.0.2"
   }

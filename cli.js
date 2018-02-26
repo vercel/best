@@ -3,6 +3,7 @@ const path = require('path');
 
 const arg = require('arg');
 const chalk = require('chalk');
+const difflet = require('difflet')({indent: 4, comment: true});
 const globby = require('globby');
 const signalExit = require('signal-exit');
 
@@ -111,6 +112,18 @@ function requireEphemeral(filepath) {
 	return module;
 }
 
+function errorMessage(err) {
+	const parts = [];
+
+	if (err.actual && err.expected) {
+		parts.push(difflet.compare(err.actual, err.expected));
+	}
+
+	parts.push(err.stack);
+
+	return parts.join('\n');
+}
+
 async function runTest(name, fn) {
 	let errResult = null;
 	try {
@@ -127,7 +140,7 @@ async function runTest(name, fn) {
 	if (errResult) {
 		// Failed
 		message += chalk`{red.bold FAIL} {whiteBright ${name.substring(0, process.stdout.columns - 5)}}\n`;
-		message += chalk`{red ${errResult.stack}}\n\n`;
+		message += chalk`{red ${errorMessage(errResult)}}\n\n`;
 	} else {
 		message += chalk`{green.bold PASS} {whiteBright ${name.substring(0, process.stdout.columns - 5)}}`;
 		if (args['--verbose']) {
