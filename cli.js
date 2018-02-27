@@ -3,7 +3,7 @@ const path = require('path');
 
 const arg = require('arg');
 const chalk = require('chalk');
-const difflet = require('difflet')({indent: 4, comment: true});
+const diff = require('@zeit/diff');
 const globby = require('globby');
 const signalExit = require('signal-exit');
 
@@ -112,11 +112,35 @@ function requireEphemeral(filepath) {
 	return module;
 }
 
+function stringifyReplacer(k, v) {
+	switch (true) {
+	case v instanceof RegExp: return v.toString();
+	case v instanceof Error: return v.stack;
+	default: return v;
+	}
+}
+
+function coloredDiff(expected, actual) {
+	const d = diff.diffJson(actual, expected, {stringifyReplacer});
+
+	const colored = d.map(od => {
+		const color = od.added
+			? chalk.green
+			: od.removed
+				? chalk.red
+				: chalk.grey;
+
+		return color(od.value);
+	});
+
+	return colored.join('');
+}
+
 function errorMessage(err) {
 	const parts = [];
 
 	if (err.actual && err.expected) {
-		parts.push(difflet.compare(err.actual, err.expected));
+		parts.push(coloredDiff(err.actual, err.expected));
 	}
 
 	parts.push(err.stack);
