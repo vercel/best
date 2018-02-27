@@ -121,13 +121,17 @@ function stringifyReplacer(k, v) {
 }
 
 function coloredDiff(expected, actual) {
+	// We invert the actual/expected and the colors
+	// so that the expected shows up first and the actual
+	// shows up second - this is why the colors don't look like
+	// they match the removed/added flags at first glance.
 	const d = diff.diffJson(actual, expected, {stringifyReplacer});
 
 	const colored = d.map(od => {
 		const color = od.added
-			? chalk.green
+			? chalk.red
 			: od.removed
-				? chalk.red
+				? chalk.green
 				: chalk.grey;
 
 		return color(od.value);
