@@ -3,7 +3,7 @@ const path = require('path');
 
 const arg = require('arg');
 const chalk = require('chalk');
-const diff = require('@zeit/diff');
+const diff = require('diff');
 const globby = require('globby');
 const signalExit = require('signal-exit');
 
