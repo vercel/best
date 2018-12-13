@@ -8,7 +8,7 @@ const diff = require('diff');
 const globby = require('globby');
 const signalExit = require('signal-exit');
 
-signalExit(() => chalk.enabled && process.stdout.write('\x1b[?25h'));
+signalExit(() => (chalk.level > 0) && process.stdout.write('\x1b[?25h'));
 
 // https://regex101.com/r/BjSw9u/2
 const MASK_PATTERN = /^(-)?([^/-][^/]*(?:\/[^/]+)*)$/;
@@ -187,21 +187,31 @@ async function runTest(name, fn) {
 		errResult = err;
 	}
 
+	// We evaluate these each time a test is run, as the
+	// number of columns might have changed if the user
+	// resized their window. We should be aware of that,
+	// especially since this is cheap.
+	//
+	// If there is no TTY, we just output everything
+	const columns = process.stdout.columns || Infinity;
+	const verbose = chalk.level > 0 ? args['--verbose'] : true;
+
 	let message = '';
-	if (chalk.enabled && !args['--verbose']) {
+
+	if (!verbose) {
 		message += '\x1b[G\x1b[2K';
 	}
 
 	if (errResult) {
 		// Failed
-		message += chalk`{red.bold FAIL} {whiteBright ${name.substring(0, process.stdout.columns - 5)}}\n`;
+		message += chalk`{red.bold FAIL} {whiteBright ${name.substring(0, columns - 5)}}\n`;
 		message += chalk`{red ${errorMessage(errResult)}\n}`;
-		if (args['--verbose']) {
+		if (verbose) {
 			message += chalk`\n{red ${errResult.stack || errResult.toString()}}\n\n`;
 		}
 	} else {
-		message += chalk`{green.bold PASS} {whiteBright ${name.substring(0, process.stdout.columns - 5)}}`;
-		if (args['--verbose']) {
+		message += chalk`{green.bold PASS} {whiteBright ${name.substring(0, columns - 5)}}`;
+		if (verbose) {
 			message += '\n';
 		}
 	}
@@ -212,7 +222,7 @@ async function runTest(name, fn) {
 
 async function main() {
 	// Hide the cursor
-	if (chalk.enabled) {
+	if (chalk.level > 0) {
 		process.stdout.write('\x1b[?25l');
 	}
 
