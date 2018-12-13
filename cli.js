@@ -85,6 +85,8 @@ const masks = [];
 
 if (args._.length > 0) {
 	const invalid = args._.filter(pattern => {
+		pattern = pattern.replace(/^\/+|\/+$/g, '');
+
 		const match = pattern.match(MASK_PATTERN);
 		if (!match) {
 			return true;
