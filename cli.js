@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const path = require('path');
+const util = require('util');
 
 const arg = require('arg');
 const chalk = require('chalk');
@@ -122,7 +123,27 @@ function stringifyReplacer(k, v) {
 	}
 }
 
+function indent(s) {
+	return s.replace(/(^|\r?\n)/g, '$1    ');
+}
+
+function inspect(o) {
+	return util.inspect(o, {depth: Number(process.env.BEST_DEPTH || 3)});
+}
+
 function coloredDiff(expected, actual) {
+	// Special case for non-object argument(s);
+	// otherwise, they look strange (issue #2)
+	if (typeof expected !== 'object' || typeof actual !== 'object') {
+		return chalk`{green {bold expected:}
+
+${indent(inspect(expected))}}
+
+{red {bold received:}
+
+${indent(inspect(actual))}}`;
+	}
+
 	// We invert the actual/expected and the colors
 	// so that the expected shows up first and the actual
 	// shows up second - this is why the colors don't look like
@@ -145,11 +166,17 @@ function coloredDiff(expected, actual) {
 function errorMessage(err) {
 	const parts = [];
 
+	if (err.stack) {
+		const stackLines = err.stack.split(/\r?\n/g).filter(line => /^\s{3,}at\s+/.test(line));
+		const firstLine = (stackLines[0] || '').trim();
+		if (firstLine) {
+			parts.push(chalk`{redBright ${firstLine}}\n`);
+		}
+	}
+
 	if (err.actual && err.expected) {
 		parts.push(coloredDiff(err.actual, err.expected));
 	}
-
-	parts.push(err.stack);
 
 	return parts.join('\n');
 }
@@ -180,7 +207,10 @@ async function runTest(name, fn) {
 	if (errResult) {
 		// Failed
 		message += chalk`{red.bold FAIL} {whiteBright ${name.substring(0, columns - 5)}}\n`;
-		message += chalk`{red ${errorMessage(errResult)}}\n\n`;
+		message += chalk`{red ${errorMessage(errResult)}\n}`;
+		if (verbose) {
+			message += chalk`\n{red ${errResult.stack || errResult.toString()}}\n\n`;
+		}
 	} else {
 		message += chalk`{green.bold PASS} {whiteBright ${name.substring(0, columns - 5)}}`;
 		if (verbose) {
