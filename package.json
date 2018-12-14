@@ -8,6 +8,16 @@
   "repository": "https://github.com/zeit/best",
   "author": "Josh Junon <junon@zeit.co>",
   "license": "MIT",
+  "keywords": [
+     "test",
+     "runner",
+     "simple",
+     "async",
+     "asynchronous",
+     "await",
+     "functions",
+     "suite"
+  ],
   "devDependencies": {
     "@zeit/eslint-config-node": "0.2.5",
     "@zeit/git-hooks": "0.1.4",
