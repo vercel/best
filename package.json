@@ -14,14 +14,14 @@
     "cli.js"
   ],
   "keywords": [
-     "test",
-     "runner",
-     "simple",
-     "async",
-     "asynchronous",
-     "await",
-     "functions",
-     "suite"
+    "test",
+    "runner",
+    "simple",
+    "async",
+    "asynchronous",
+    "await",
+    "functions",
+    "suite"
   ],
   "devDependencies": {
     "@zeit/eslint-config-node": "0.2.5",
