@@ -8,6 +8,11 @@
   "repository": "https://github.com/zeit/best",
   "author": "Josh Junon <junon@zeit.co>",
   "license": "MIT",
+  "files": [
+    "README.md",
+    "LICENSE",
+    "cli.js"
+  ],
   "keywords": [
      "test",
      "runner",
