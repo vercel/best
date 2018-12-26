@@ -1,11 +1,12 @@
 #!/usr/bin/env node
+const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
 const arg = require('arg');
 const chalk = require('chalk');
 const diff = require('diff');
-const globby = require('globby');
+const matchFileTree = require('match-file-tree');
 const signalExit = require('signal-exit');
 
 signalExit(() => (chalk.level > 0) && process.stdout.write('\x1b[?25h'));
@@ -18,6 +19,9 @@ const args = arg({
 
 	'--include': [String],
 	'-I': '--include',
+
+	'--file': [String],
+	'-f': '--file',
 
 	'--verbose': Boolean,
 	'-v': '--verbose',
@@ -63,9 +67,13 @@ if (args['--help']) {
 
     -v, --verbose                   Shows more verbose test results
 
-    -I, --include {underline /dir/or/file}      Uses one or more directories/files as test sources.
-                                    Defaults to {bold ./test/**/*.js} if no include directives
-                                    are specified
+    -I, --include {underline /path/to/dir/}     Searches a directory for test sources
+                                    Defaults to {bold ./test/} if no --file or other --include
+                                    directives are specified
+
+    -f, --file {underline /path/to/file.js}     Includes a single file as a test source
+                                    Defaults to {bold ./test.js} if no other --file or --include
+                                    directives are specified
 
     -r, --require {underline module-name}       Imports a module or a script prior to running tests
 `);
@@ -237,19 +245,29 @@ async function main() {
 	}
 
 	// Get file listing
-	const filePaths = (((args['--include'] || []).length > 0) ? args['--include'] : ['test']);
-	const files = (await globby(filePaths, {
-		expandDirectories: {
-			extensions: ['js']
-		}
-	})).filter(filepath => {
-		if (path.extname(filepath) !== '.js') {
-			warning(`ignoring file (not a script): ${filepath}`);
-			return false;
-		}
+	const files = [];
 
-		return true;
-	});
+	if (!args['--include'] && !args['--file']) {
+		try {
+			fs.accessSync('./test.js', fs.R_OK);
+			files.push('test.js');
+		} catch (_) {
+			args['--include'] = ['./test'];
+		}
+	}
+
+	if (args['--file']) {
+		files.push(...args['--file']);
+	}
+
+	if (args['--include']) {
+		await Promise.all(args['--include'].map(
+			async include => (
+				files.push(...((await matchFileTree(/\.js$/, include))
+					.map(fpath => path.join(include, fpath))))
+			)
+		));
+	}
 
 	if (files.length === 0) {
 		warning(`no test files specified`);
