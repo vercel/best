@@ -45,10 +45,11 @@
     "pre-commit": "lint-staged"
   },
   "dependencies": {
-    "diff": "3.5.0",
     "arg": "1.0.0",
     "chalk": "2.3.1",
+    "diff": "3.5.0",
     "globby": "8.0.0",
-    "signal-exit": "3.0.2"
+    "signal-exit": "3.0.2",
+    "strip-ansi": "^5.0.0"
   }
 }

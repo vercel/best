@@ -7,6 +7,7 @@ const chalk = require('chalk');
 const diff = require('diff');
 const globby = require('globby');
 const signalExit = require('signal-exit');
+const stripAnsi = require('strip-ansi');
 
 signalExit(() => (chalk.level > 0) && process.stdout.write('\x1b[?25h'));
 
@@ -135,27 +136,23 @@ function coloredDiff(expected, actual) {
 	// Special case for non-object argument(s);
 	// otherwise, they look strange (issue #2)
 	if (typeof expected !== 'object' || typeof actual !== 'object') {
-		return chalk`{green {bold expected:}
+		return chalk`{greenBright {bold expected:}
 
 ${indent(inspect(expected))}}
 
-{red {bold received:}
+{redBright {bold actual:}
 
 ${indent(inspect(actual))}}`;
 	}
 
-	// We invert the actual/expected and the colors
-	// so that the expected shows up first and the actual
-	// shows up second - this is why the colors don't look like
-	// they match the removed/added flags at first glance.
-	const d = diff.diffJson(actual, expected, {stringifyReplacer});
+	const d = diff.diffJson(expected, actual, {stringifyReplacer});
 
 	const colored = d.map(od => {
-		const color = od.added
-			? chalk.red
-			: od.removed
-				? chalk.green
-				: chalk.grey;
+		const color = od.removed
+			? chalk.greenBright
+			: (od.added
+				? chalk.redBright
+				: chalk.grey);
 
 		return color(od.value);
 	});
@@ -163,22 +160,39 @@ ${indent(inspect(actual))}}`;
 	return colored.join('');
 }
 
-function errorMessage(err) {
-	const parts = [];
+function leftPad(padding, str) {
+	const padstr = ' '.repeat(padding);
+	return padstr + str
+		.split(/\r?\n/g)
+		.join(`\n${padstr}`)
+		.replace(/ +$/, '');
+}
 
+function errorMessage(err) {
 	if (err.stack) {
-		const stackLines = err.stack.split(/\r?\n/g).filter(line => /^\s{3,}at\s+/.test(line));
-		const firstLine = (stackLines[0] || '').trim();
-		if (firstLine) {
-			parts.push(chalk`{redBright ${firstLine}}\n`);
+		const stackLines = err.stack
+			.split(/\r?\n/g)
+			.filter(line => /^\s{3,}at\s+/.test(line));
+
+		const firstLines = stackLines
+			.slice(0, 2)
+			.map(line => line.trim())
+			.join('\n');
+
+		if (firstLines) {
+			return chalk`{redBright ${firstLines}}\n\n`;
 		}
 	}
 
+	return '';
+}
+
+function diffMessage(err) {
 	if (err.actual && err.expected) {
-		parts.push(coloredDiff(err.actual, err.expected));
+		return coloredDiff(err.expected, err.actual);
 	}
 
-	return parts.join('\n');
+	return '';
 }
 
 async function runTest(name, fn) {
@@ -207,12 +221,25 @@ async function runTest(name, fn) {
 	if (errResult) {
 		// Failed
 		message += chalk`{red.bold FAIL} {whiteBright ${name.substring(0, columns - 5)}}\n`;
-		message += chalk`{red ${errorMessage(errResult)}\n}`;
+
+		// We put into `details` so that we can leftPad() if we're in verbose mode.
+		message += errorMessage(errResult);
+
+		let details = `${diffMessage(errResult)}\n`;
+
 		if (verbose) {
-			message += chalk`\n{red ${errResult.stack || errResult.toString()}}\n\n`;
+			details += chalk`\n{red ${stripAnsi(errResult.stack || errResult.toString())}}\n\n`;
+			details = leftPad(6, details);
+		}
+
+		message += details;
+
+		if (!verbose) {
+			message += '\n\n';
 		}
 	} else {
 		message += chalk`{green.bold PASS} {whiteBright ${name.substring(0, columns - 5)}}`;
+
 		if (verbose) {
 			message += '\n';
 		}
@@ -302,14 +329,12 @@ async function main() {
 		failures += Number(!testSuccess);
 	}
 
-	if (!args['--verbose']) {
-		process.stdout.write('\n');
-	}
+	process.stdout.write('\n');
 
 	if (failures === 0) {
-		console.error(chalk`\n{inverse.greenBright ALL TESTS PASSED}`);
+		console.error(chalk`{inverse.greenBright ALL TESTS PASSED}`);
 	} else {
-		console.error(chalk`\n{inverse.redBright ${failures} TESTS FAILED}`);
+		console.error(chalk`{inverse.redBright ${failures} TESTS FAILED}`);
 		process.exit(1);
 	}
 }
