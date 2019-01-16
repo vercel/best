@@ -135,7 +135,7 @@ function inspect(o) {
 function coloredDiff(expected, actual) {
 	// Special case for non-object argument(s);
 	// otherwise, they look strange (issue #2)
-	if (typeof expected !== 'object' || typeof actual !== 'object') {
+	if (expected === null || typeof expected !== 'object' || actual === null || typeof actual !== 'object') {
 		return chalk`{greenBright {bold expected:}
 
 ${indent(inspect(expected))}}
@@ -188,7 +188,7 @@ function errorMessage(err) {
 }
 
 function diffMessage(err) {
-	if (err.actual && err.expected) {
+	if ('actual' in err && 'expected' in err) {
 		return coloredDiff(err.expected, err.actual);
 	}
 
