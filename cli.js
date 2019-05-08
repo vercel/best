@@ -78,8 +78,10 @@ function error(msg) {
 	console.error(chalk`{bold.cyanBright best:} {bold.red error:}`, msg);
 }
 
+// NOTE: split out here because we need it in the injected CJS wrapper.
+const warningLabel = chalk`{bold.cyanBright best:} {bold.yellow warning:}`;
 function warning(msg) {
-	console.error(chalk`{bold.cyanBright best:} {bold.yellow warning:}`, msg);
+	console.error(warningLabel, msg);
 }
 
 let whitelistMode = false;
@@ -249,6 +251,88 @@ async function runTest(name, fn) {
 	return !Boolean(errResult);
 }
 
+function injectMapExports() {
+	/*
+		This function injects a wrapper into the CommonJS loader
+		that is built into Node.js that ultimately forms the basis
+		for the module import system.
+
+		We immediately overwrite the module.exports object with a
+		proxy to a map that allows us to iterate keys in the order
+		in which they were defined. Even though *most* implementations
+		of Node+V8 should store keys in order anyway, it's not guaranteed
+		by the Ecmascript specification and thus we use the injection
+		technique to force this to be the case (since Map properties are
+		specified to be stored in the order in which they were defined).
+	*/
+
+	const module = require('module');
+	const checkExistingCJS = '(function (exports, require, module, __filename, __dirname) { ';
+
+	if (module.wrapper[0] !== checkExistingCJS) {
+		warning('CJS header differs from default; cowardly refusing to inject Map exports!');
+		warning('This means you\'re using a really old version of Node, or something has');
+		warning('modified the built-in CommonJS loader. This means Best can no longer guarantee');
+		warning('your tests will run in the order they are defined in code.');
+		warning('');
+		warning('Your tests might run out of order, which may give you false positives or');
+		warning('false negatives.');
+		warning('');
+		warning('');
+		warning('Current CJS header:');
+		warning('');
+		warning(module.wrapper[0]);
+		warning('');
+		warning('Expected CJS header:');
+		warning('');
+		warning(checkExistingCJS);
+		return;
+	}
+
+	// NOTE: While we define this wrapper with multiple lines here,
+	//       note the call to .replace() that collapses it to a single
+	//       line. Make sure any modifications are safe for this, as it's
+	//       required to generate correct line numbers in stack traces.
+	module.wrapper[0] += `{
+		const warningLabel = ${JSON.stringify(warningLabel)};
+		const showWarningTrace = () => (new Error()).stack
+			.toString()
+			.split(/\\n/g)
+			.slice(1)
+			.forEach(line => console.warn(warningLabel, line));
+
+		exports = new Proxy(new Map(), {
+			getPrototypeOf() { return Object.prototype; },
+			setPrototypeOf() {
+				console.warn(warningLabel, 'Attempting to set the prototype of the Best exports object; this is not allowed');
+				console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
+				showWarningTrace();
+			},
+			has(target, k) { return target.has(k); },
+			get(target, k) { return target.get(k); },
+			set(target, k, v) { target.set(k, v); },
+			deleteProperty(target, k) { return target.delete(k); },
+			ownKeys(target) { return [...target.keys()]; }
+		});
+
+		delete module.exports;
+		let moduleExports = exports;
+		Object.defineProperty(module, 'exports', {
+			get() { return moduleExports; },
+			set(v) {
+				console.warn(warningLabel, 'Overwriting \`module.exports\` in a Best test suite means Best cannot guarantee test execution order.');
+				console.warn(warningLabel, 'Consider using \`exports.testName = ...\` or \`exports[\\'testName\\'] = ...\` instead.');
+				console.warn(warningLabel);
+				console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
+				showWarningTrace();
+				moduleExports = v;
+			},
+			enumerable: true,
+			configurable: true /* Allow users to suppress the warning by deleting module.exports first. */
+		});
+	}`.replace(/(^|\r?\n)\s+/g, '');
+}
+
 async function main() {
 	// Hide the cursor
 	if (chalk.level > 0) {
@@ -285,11 +369,13 @@ async function main() {
 		return;
 	}
 
+	injectMapExports();
+
 	// Build up test suite
 	const suite = [];
 	for (const filepath of files) {
 		const module = requireEphemeral(path.resolve(filepath));
-		const moduleKeys = Object.keys(module);
+		const moduleKeys = Object.getOwnPropertyNames(module);
 		let validTests = moduleKeys.length;
 		const tests = moduleKeys
 			.map(key => [key, `${filepath.slice(0, -3)}/${key}`])
