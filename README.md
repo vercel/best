@@ -72,4 +72,4 @@ $ best -r esm -r ts-node
 > **NOTE:** `esm` must come before `ts-node`!
 
 ## License
-Best is copyright &copy; 2018 by ZEIT, Inc. and released under the [MIT License](LICENSE).
+Best is copyright &copy; 2018-2019 by ZEIT, Inc. and released under the [MIT License](LICENSE).
