@@ -17,7 +17,7 @@ $ npm install --save-dev @zeit/best
 ## Usage
 
 ```
-  best v0.1.0
+  best
 
   A dead simple test runner.
 
@@ -35,9 +35,9 @@ $ npm install --save-dev @zeit/best
 
     For example, the following test function inside test/foo.js:
 
-        export async function my_example_test() {
+        exports.my_example_test = async () => {
             assert(foo === bar);
-        }
+        };
 
     would translate to the test_name:
 
@@ -55,6 +55,9 @@ $ npm install --save-dev @zeit/best
     -I, --include /dir/or/file      Uses one or more directories/files as test sources.
                                     Defaults to ./test/**/*.js if no include directives
                                     are specified
+
+    -r, --require module-name       Imports a module or a script prior to running tests
+
 ```
 
 ## License
