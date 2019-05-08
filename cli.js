@@ -6,10 +6,7 @@ const arg = require('arg');
 const chalk = require('chalk');
 const diff = require('diff');
 const globby = require('globby');
-const signalExit = require('signal-exit');
 const stripAnsi = require('strip-ansi');
-
-signalExit(() => (chalk.level > 0) && process.stdout.write('\x1b[?25h'));
 
 // https://regex101.com/r/BjSw9u/2
 const MASK_PATTERN = /^(-)?([^/-][^/]*(?:\/[^/]+)*)$/;
@@ -210,12 +207,12 @@ async function runTest(name, fn) {
 	//
 	// If there is no TTY, we just output everything
 	const columns = process.stdout.columns || Infinity;
-	const verbose = chalk.level > 0 ? args['--verbose'] : true;
+	const verbose = args['--verbose'];
 
 	let message = '';
 
 	if (!verbose) {
-		message += '\x1b[G\x1b[2K';
+		message = `\r${' '.repeat(Number(process.stdout.columns))}\r`;
 	}
 
 	if (errResult) {
@@ -250,11 +247,6 @@ async function runTest(name, fn) {
 }
 
 async function main() {
-	// Hide the cursor
-	if (chalk.level > 0) {
-		process.stdout.write('\x1b[?25l');
-	}
-
 	// Perform requirements
 	for (const requirement of (args['--require'] || [])) {
 		if (args['--verbose']) {
