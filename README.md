@@ -60,5 +60,16 @@ $ npm install --save-dev @zeit/best
 
 ```
 
+### Typescript
+
+To use with Typescript, install `ts-node` and `esm` and register them.
+
+```console
+$ npm install --save-dev ts-node esm
+$ best -r esm -r ts-node
+```
+
+> **NOTE:** `esm` must come before `ts-node`!
+
 ## License
 Best is copyright &copy; 2018 by ZEIT, Inc. and released under the [MIT License](LICENSE).
