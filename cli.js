@@ -264,13 +264,15 @@ async function main() {
 	}
 
 	// Get file listing
+	const allowedExtensions = Object.getOwnPropertyNames(require.extensions);
+
 	const filePaths = (((args['--include'] || []).length > 0) ? args['--include'] : ['test']);
 	const files = (await globby(filePaths, {
 		expandDirectories: {
-			extensions: ['js']
+			extensions: allowedExtensions.map(s => s.replace(/^\.+/, ''))
 		}
 	})).filter(filepath => {
-		if (path.extname(filepath) !== '.js') {
+		if (!allowedExtensions.includes(path.extname(filepath))) {
 			warning(`ignoring file (not a script): ${filepath}`);
 			return false;
 		}
