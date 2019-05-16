@@ -110,7 +110,9 @@ if (args._.length > 0) {
 
 function requireEphemeral(filepath) {
 	const resolved = require.resolve(filepath);
+	global.__isBestLoadingTestModule = true;
 	const module = require(resolved);
+	delete global.__isBestLoadingTestModule;
 	delete require.cache[resolved];
 	return module;
 }
@@ -291,42 +293,46 @@ function injectMapExports() {
 	//       line. Make sure any modifications are safe for this, as it's
 	//       required to generate correct line numbers in stack traces.
 	module.wrapper[0] += `{
-		const warningLabel = ${JSON.stringify(warningLabel)};
-		const showWarningTrace = () => (new Error()).stack
-			.toString()
-			.split(/\\n/g)
-			.slice(1)
-			.forEach(line => console.warn(warningLabel, line));
+		const isTestModule = global.__isBestLoadingTestModule;
+		delete global.__isBestLoadingTestModule;
+		if (isTestModule) {
+			const warningLabel = ${JSON.stringify(warningLabel)};
+			const showWarningTrace = () => (new Error()).stack
+				.toString()
+				.split(/\\n/g)
+				.slice(1)
+				.forEach(line => console.warn(warningLabel, line));
 
-		exports = new Proxy(new Map(), {
-			getPrototypeOf() { return Object.prototype; },
-			setPrototypeOf() {
-				console.warn(warningLabel, 'Attempting to set the prototype of the Best exports object; this is not allowed');
-				console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
-				showWarningTrace();
-			},
-			has(target, k) { return target.has(k); },
-			get(target, k) { return target.get(k); },
-			set(target, k, v) { target.set(k, v); },
-			deleteProperty(target, k) { return target.delete(k); },
-			ownKeys(target) { return [...target.keys()]; }
-		});
+			exports = new Proxy(new Map(), {
+				getPrototypeOf() { return Object.prototype; },
+				setPrototypeOf() {
+					console.warn(warningLabel, 'Attempting to set the prototype of the Best exports object; this is not allowed');
+					console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
+					showWarningTrace();
+				},
+				has(target, k) { return target.has(k); },
+				get(target, k) { return target.get(k); },
+				set(target, k, v) { target.set(k, v); },
+				deleteProperty(target, k) { return target.delete(k); },
+				ownKeys(target) { return [...target.keys()]; }
+			});
 
-		delete module.exports;
-		let moduleExports = exports;
-		Object.defineProperty(module, 'exports', {
-			get() { return moduleExports; },
-			set(v) {
-				console.warn(warningLabel, 'Overwriting \`module.exports\` in a Best test suite means Best cannot guarantee test execution order.');
-				console.warn(warningLabel, 'Consider using \`exports.testName = ...\` or \`exports[\\'testName\\'] = ...\` instead.');
-				console.warn(warningLabel);
-				console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
-				showWarningTrace();
-				moduleExports = v;
-			},
-			enumerable: true,
-			configurable: true /* Allow users to suppress the warning by deleting module.exports first. */
-		});
+			delete module.exports;
+			let moduleExports = exports;
+			Object.defineProperty(module, 'exports', {
+				get() { return moduleExports; },
+				set(v) {
+					moduleExports = v;
+					console.warn(warningLabel, 'Overwriting \`module.exports\` in a Best test suite means Best cannot guarantee test execution order.');
+					console.warn(warningLabel, 'Consider using \`exports.testName = ...\` or \`exports[\\'testName\\'] = ...\` instead.');
+					console.warn(warningLabel);
+					console.warn(warningLabel, 'If you are ABSOLUTELY SURE you know what you are doing, \`delete module.exports\` first.');
+					showWarningTrace();
+				},
+				enumerable: true,
+				configurable: true /* Allow users to suppress the warning by deleting module.exports first. */
+			});
+		}
 	}`.replace(/(^|\r?\n)\s+/g, '');
 }
 
