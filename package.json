@@ -49,6 +49,6 @@
     "chalk": "2.3.1",
     "diff": "3.5.0",
     "globby": "8.0.0",
-    "strip-ansi": "^5.0.0"
+    "strip-ansi": "5.0.0"
   }
 }
