@@ -71,5 +71,22 @@ $ best -r esm -r ts-node
 
 > **NOTE:** `esm` must come before `ts-node`!
 
+### Debugging Hangs
+
+Best does not have a built-in timeout for tests in order to remain as unopinionated as possible.
+Due to this, hangs may occur from time to time.
+
+Using `why-is-node-running`, we can detect hangs and see what caused them:
+
+```console
+$ npm install --save-dev why-is-node-running
+$ best -r why-is-node-running/include
+...
+$ pkill -USR1 node
+```
+
+Sending `SIGUSR1` to the process will cause `why-is-node-running` to dump statistics
+about remaining (ref'd) handles to the TTY of the node process itself.
+
 ## License
 Best is copyright &copy; 2018-2019 by ZEIT, Inc. and released under the [MIT License](LICENSE).
