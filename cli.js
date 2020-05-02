@@ -314,7 +314,8 @@ function injectMapExports() {
 				get(target, k) { return target.get(k); },
 				set(target, k, v) { target.set(k, v); },
 				deleteProperty(target, k) { return target.delete(k); },
-				ownKeys(target) { return [...target.keys()]; }
+				ownKeys(target) { return [...target.keys()]; },
+				getOwnPropertyDescriptor() { return {configurable: true, enumerable: true, writable: true}; }
 			});
 
 			delete module.exports;
