@@ -1,4 +1,15 @@
 #!/usr/bin/env node
+/*
+	ATTENTION: Are you trying to debug a test and you've ended up
+	around here when using `node --inspect[-brk]`?
+
+	Just hit continue. Best will break somewhere down below (using
+	the `debugger` statement) after your modules have been loaded.
+
+	Read the instructions around there for what to do next if you're
+	unsure.
+*/
+
 const path = require('path');
 const util = require('util');
 
@@ -372,6 +383,7 @@ async function main() {
 
 	// Build up test suite
 	const suite = [];
+
 	for (const filepath of files) {
 		const module = requireEphemeral(path.resolve(filepath));
 		const moduleKeys = Object.getOwnPropertyNames(module);
@@ -409,6 +421,20 @@ async function main() {
 		warning('no tests to run');
 		return;
 	}
+
+	/*
+		ATTENTION: Are you debugging a test (inspecting Node.js) and ended up here?
+
+		Your modules have been loaded and Best is breaking so that you can set
+		your breakpoints - after which, you can continue the process and Best
+		will begin running your test suites.
+
+		If your sources are not showing up in the Filesystem tab in Chrome (if you're
+		using the Chrome inspector), press Ctrl+P (or Cmd+P on MacOS) and type
+		the name of the test file you want to open up.
+	*/
+	// eslint-disable-next-line no-debugger
+	debugger;
 
 	let failures = 0;
 	for (const [testName, fn] of suite) {
